@@ -488,7 +488,7 @@ export const TransactionsPage = () => {
                                 <div className="flex items-center gap-2">
                                   <p className="text-sm font-semibold text-gray-900 truncate">{transaction.description}</p>
                                   {isRecurringLike(transaction.description) && (
-                                    <RefreshCw size={12} className="text-gray-400 flex-shrink-0" title="Recorrente" />
+                                    <RefreshCw size={12} className="text-gray-400 flex-shrink-0" />
                                   )}
                                 </div>
                                 {/* Mobile Category/Account */}
