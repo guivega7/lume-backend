@@ -82,7 +82,7 @@ const CategoryIcon = ({ category }: { category: Category | null }) => {
   else if (name.includes('compra') || name.includes('shopping')) { Icon = ShoppingBag; colorClass = "bg-yellow-100 text-yellow-600"; }
 
   return (
-    <div className={cn("w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center shadow-sm flex-shrink-0", colorClass)} title={category.name}>
+    <div className={cn("w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center shadow-sm flex-shrink-0", colorClass)}>
       <Icon size={16} />
     </div>
   );

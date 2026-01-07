@@ -49,6 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signIn({ email, password }: any) {
     setLoading(true);
     try {
+      // @ts-ignore
       const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
       const authURL = baseURL.replace(/\/api$/, '');
       
