@@ -1,0 +1,58 @@
+target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+### SEGURANÇA (Obrigatório) ###
+# Ignora arquivos de variáveis de ambiente locais (onde ficam as senhas no seu PC)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+env.properties
+
+# Logs (podem conter dados sensíveis de erro)
+*.log
+logs/
+
+### FRONTEND (React/Node) ###
+# Gigante e desnecessário, o Vercel instala isso sozinho
+node_modules/
+# Pasta de build do React
+dist/
+build/
+# Arquivos temporários do Vercel
+.vercel/
+
+### SISTEMA OPERACIONAL (Lixo eletrônico) ###
+.DS_Store
+Thumbs.db
