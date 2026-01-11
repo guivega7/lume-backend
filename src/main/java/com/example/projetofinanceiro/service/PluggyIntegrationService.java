@@ -2,9 +2,9 @@ package com.example.projetofinanceiro.service;
 
 import ai.pluggy.client.PluggyClient;
 import ai.pluggy.client.request.CreateConnectTokenRequest;
+import ai.pluggy.client.request.TransactionsSearchRequest;
 import ai.pluggy.client.response.ConnectTokenResponse;
 import ai.pluggy.client.response.TransactionsResponse;
-import ai.pluggy.client.request.TransactionsSearchRequest;
 import com.example.projetofinanceiro.model.Transaction;
 import com.example.projetofinanceiro.model.TransactionType;
 import com.example.projetofinanceiro.model.User;
@@ -12,6 +12,7 @@ import com.example.projetofinanceiro.repository.TransactionRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import retrofit2.Response;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -46,8 +47,12 @@ public class PluggyIntegrationService {
             throw new RuntimeException("Pluggy client is not initialized.");
         }
         try {
-            ConnectTokenResponse response = pluggyClient.service().createConnectToken(new CreateConnectTokenRequest()).execute();
-            return response.getAccessToken();
+            Response<ConnectTokenResponse> response = pluggyClient.service().createConnectToken(new CreateConnectTokenRequest()).execute();
+            if (response.isSuccessful() && response.body() != null) {
+                return response.body().getAccessToken();
+            } else {
+                throw new RuntimeException("Falha ao criar Connect Token: " + response.message());
+            }
         } catch (IOException e) {
             throw new RuntimeException("Erro ao criar Connect Token da Pluggy", e);
         }
@@ -65,16 +70,18 @@ public class PluggyIntegrationService {
                     .accountId(accountId)
                     .from(LocalDate.now().minusDays(30).toString());
 
-            TransactionsResponse response = pluggyClient.service().transactions().list(request).execute();
+            Response<TransactionsResponse> response = pluggyClient.service().transactions().list(request).execute();
 
-            if (response != null && response.getResults() != null) {
+            if (response.isSuccessful() && response.body() != null && response.body().getResults() != null) {
                 int count = 0;
-                for (ai.pluggy.client.response.Transaction pluggyTx : response.getResults()) {
+                for (ai.pluggy.client.response.Transaction pluggyTx : response.body().getResults()) {
                     if (saveTransaction(pluggyTx, user)) {
                         count++;
                     }
                 }
                 log.info("Sincronização concluída. {} novas transações salvas para o usuário {}.", count, user.getEmail());
+            } else {
+                log.error("Falha ao buscar transações: {}", response.message());
             }
 
         } catch (IOException e) {
@@ -109,13 +116,16 @@ public class PluggyIntegrationService {
 
             // Data
             if (pluggyTx.getDate() != null) {
-                transaction.setDate(LocalDate.parse(pluggyTx.getDate().substring(0, 10))); 
+                // Pluggy 0.10.0 pode retornar data em formato diferente, mas geralmente é ISO 8601
+                // Vamos tentar parsear de forma segura
+                try {
+                    transaction.setDate(LocalDate.parse(pluggyTx.getDate().substring(0, 10)));
+                } catch (Exception e) {
+                    transaction.setDate(LocalDate.now());
+                }
             } else {
                 transaction.setDate(LocalDate.now());
             }
-
-            // TODO: Vincular a uma Account interna se possível (mapeamento de accountId da Pluggy para Account do sistema)
-            // Por enquanto, fica sem conta vinculada (apenas usuário) ou você pode passar a Account como parâmetro no sincronizarTransacoes
 
             transactionRepository.save(transaction);
             return true;
