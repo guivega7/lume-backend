@@ -47,14 +47,19 @@ public class PluggyIntegrationService {
             throw new RuntimeException("Pluggy client is not initialized.");
         }
         try {
-            Response<ConnectTokenResponse> response = pluggyClient.service().createConnectToken(new CreateConnectTokenRequest()).execute();
+            // Na versão 0.10.0, o método pode exigir um objeto de request vazio ou nulo, 
+            // mas CreateConnectTokenRequest é o padrão.
+            Response<ConnectTokenResponse> response = pluggyClient.service()
+                .createConnectToken(new CreateConnectTokenRequest())
+                .execute();
+            
             if (response.isSuccessful() && response.body() != null) {
                 return response.body().getAccessToken();
             } else {
                 throw new RuntimeException("Falha ao criar Connect Token: " + response.message());
             }
         } catch (IOException e) {
-            throw new RuntimeException("Erro ao criar Connect Token da Pluggy", e);
+            throw new RuntimeException("Erro de IO ao criar Connect Token da Pluggy", e);
         }
     }
 
@@ -70,7 +75,10 @@ public class PluggyIntegrationService {
                     .accountId(accountId)
                     .from(LocalDate.now().minusDays(30).toString());
 
-            Response<TransactionsResponse> response = pluggyClient.service().transactions().list(request).execute();
+            Response<TransactionsResponse> response = pluggyClient.service()
+                .transactions()
+                .list(request)
+                .execute();
 
             if (response.isSuccessful() && response.body() != null && response.body().getResults() != null) {
                 int count = 0;
@@ -81,11 +89,11 @@ public class PluggyIntegrationService {
                 }
                 log.info("Sincronização concluída. {} novas transações salvas para o usuário {}.", count, user.getEmail());
             } else {
-                log.error("Falha ao buscar transações: {}", response.message());
+                log.error("Falha ao buscar transações da Pluggy. Código: {}, Mensagem: {}", response.code(), response.message());
             }
 
         } catch (IOException e) {
-            log.error("Erro ao conectar com a API da Pluggy: ", e);
+            log.error("Erro de conexão com a API da Pluggy: ", e);
         } catch (Exception e) {
             log.error("Erro inesperado durante a sincronização: ", e);
         }
@@ -104,6 +112,7 @@ public class PluggyIntegrationService {
             transaction.setUser(user);
             
             // Mapeamento de valor e tipo
+            // Na versão 0.10.0, getAmount() retorna Double.
             BigDecimal amount = BigDecimal.valueOf(pluggyTx.getAmount());
             
             if (amount.compareTo(BigDecimal.ZERO) < 0) {
@@ -116,11 +125,11 @@ public class PluggyIntegrationService {
 
             // Data
             if (pluggyTx.getDate() != null) {
-                // Pluggy 0.10.0 pode retornar data em formato diferente, mas geralmente é ISO 8601
-                // Vamos tentar parsear de forma segura
                 try {
+                    // Tenta parsear a data (formato ISO 8601 esperado)
                     transaction.setDate(LocalDate.parse(pluggyTx.getDate().substring(0, 10)));
                 } catch (Exception e) {
+                    log.warn("Erro ao parsear data da transação {}: {}. Usando data atual.", pluggyTx.getId(), pluggyTx.getDate());
                     transaction.setDate(LocalDate.now());
                 }
             } else {
