@@ -21,6 +21,9 @@ public class Transaction {
     @Enumerated(EnumType.STRING)
     private TransactionType type;
 
+    @Column(unique = true)
+    private String externalId; // ID da transação na Pluggy
+
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
